@@ -33,3 +33,6 @@ TestResults/
 # NuGet
 *.nupkg
 packages/
+
+# Local personal learning notes
+learn/
