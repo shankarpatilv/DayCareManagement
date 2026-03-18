@@ -47,3 +47,5 @@ migration.sql
 
 # Local .NET tool manifest (global tools mode)
 dotnet-tools.json
+
+scripts/
