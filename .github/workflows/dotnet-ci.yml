@@ -33,11 +33,7 @@ jobs:
             - name: Migration consistency check
               env:
                   DAYCAREMANAGEMENT_CONNECTIONSTRING: Host=localhost;Port=5432;Database=ci_dummy;Username=ci_dummy;Password=ci_dummy
-              run: >
-                  dotnet ef migrations has-pending-model-changes
-                  --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj
-                  --context DayCareManagementDbContext
-                  --no-build
+              run: dotnet ef migrations has-pending-model-changes --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj --context DayCareManagementDbContext --configuration Release --no-build
 
             - name: Test
               run: dotnet test DayCareManagement.sln --configuration Release --no-build --verbosity normal
