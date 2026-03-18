@@ -20,6 +20,5 @@ public sealed class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
         builder.Property(teacher => teacher.ClassRoomName).HasMaxLength(100);
         builder.Property(teacher => teacher.RegisterDate).IsRequired();
 
-        builder.HasIndex(teacher => teacher.Email).IsUnique();
     }
 }

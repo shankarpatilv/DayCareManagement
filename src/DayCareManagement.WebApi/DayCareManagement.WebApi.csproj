@@ -7,4 +7,8 @@
     <ProjectReference Include="..\DayCareManagement.Application\DayCareManagement.Application.csproj" />
     <ProjectReference Include="..\DayCareManagement.Infrastructure\DayCareManagement.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
+  </ItemGroup>
 </Project>

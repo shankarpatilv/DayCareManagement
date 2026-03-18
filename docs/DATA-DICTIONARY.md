@@ -59,7 +59,7 @@ This document includes both current persistence constraints and planned validati
 
 ## Cross-entity constraints
 
-- Currently enforced in DB: primary keys (`Student.StudentId`, `Teacher.TeacherId`), foreign key (`Immunization.StudentId` -> `Student.StudentId`), immunization uniqueness on `(StudentId, ImmunizationId, ImmunizationDate)`, and unique indexes on `Student.Email` and `Teacher.Email`.
-- Planned in importer/application layer: case-insensitive email normalization semantics and date input parsing conventions (for example, `dd/MM/yyyy`).
+- Currently enforced in DB: primary keys (`Student.StudentId`, `Teacher.TeacherId`), foreign key (`Immunization.StudentId` -> `Student.StudentId`), composite PK uniqueness on immunizations, and case-insensitive unique email indexes on `Student.Email` and `Teacher.Email`.
+- Planned in importer/application layer: email normalization policy at input boundaries and date input parsing conventions (for example, `dd/MM/yyyy`).
 
 <!-- markdownlint-enable MD060 -->

@@ -15,8 +15,10 @@ Milestones M1 + M2 persistence foundation for migrating the Java Day Care Manage
 
 - M1 foundation: project layout, baseline conventions, and host bootstrapping.
 - M2 persistence foundation: domain entities, EF Core mappings, PostgreSQL context wiring, and initial migration.
+- M3 auth baseline implemented in Web API: `/auth/login`, `/auth/me`, and role-policy protected endpoints.
+- JWT startup hardening is enabled: API startup fails fast if `Jwt:SigningKey` is missing, too short, or placeholder/default.
 - Layered solution structure and references compile with current solution setup.
-- Test project scaffold is present and included in solution-level test runs.
+- Application test project covers auth service behavior and JWT signing-key policy validation.
 
 ## Quickstart
 
@@ -37,10 +39,32 @@ dotnet tool install --global dotnet-ef
 From `DayCareManagement/`:
 
 ```bash
-cp .env.example .env
+cat > .env <<'EOF'
+DAYCAREMANAGEMENT_CONNECTIONSTRING=Host=localhost;Port=5432;Database=daycare;Username=postgres;Password=postgres
+EOF
 ```
 
 Set `DAYCAREMANAGEMENT_CONNECTIONSTRING` in `.env`.
+
+### Configure JWT settings (required)
+
+Set JWT settings via environment variables, user-secrets, or `appsettings`.
+
+Environment variable names:
+
+- `Jwt__Issuer`
+- `Jwt__Audience`
+- `Jwt__SigningKey` (must be 32+ characters and not a placeholder/tutorial value)
+- `Jwt__ExpiresMinutes`
+
+Example:
+
+```bash
+export Jwt__Issuer=DayCareManagement
+export Jwt__Audience=DayCareManagementClients
+export Jwt__SigningKey='use-a-unique-random-secret-at-least-32-characters'
+export Jwt__ExpiresMinutes=60
+```
 
 ### Restore, build, and test
 
@@ -66,7 +90,7 @@ dotnet ef database update \
 
 ## Next Steps (M3+)
 
-- Implement application-layer use cases and validation workflows.
+- Continue migrating legacy feature modules beyond current auth and persistence scope.
 - Add importer pipeline with CSV validation and mapping rules.
-- Add API endpoints and corresponding Web App features.
+- Expand Web App integration against existing API endpoints.
 - Expand automated tests for business rules and integration paths.
