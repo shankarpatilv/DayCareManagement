@@ -16,7 +16,7 @@ public sealed class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
         builder.Property(teacher => teacher.FirstName).HasMaxLength(100).IsRequired();
         builder.Property(teacher => teacher.LastName).HasMaxLength(100).IsRequired();
         builder.Property(teacher => teacher.Email).HasMaxLength(320).IsRequired();
-        builder.Property(teacher => teacher.Password).IsRequired();
+        builder.Property(teacher => teacher.Password).HasMaxLength(255).IsRequired();
         builder.Property(teacher => teacher.ClassRoomName).HasMaxLength(100);
         builder.Property(teacher => teacher.RegisterDate).IsRequired();
 

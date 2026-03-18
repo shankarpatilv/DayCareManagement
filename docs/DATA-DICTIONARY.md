@@ -22,7 +22,7 @@ This document includes both current persistence constraints and planned validati
 | PhoneNo      | string       | Yes      | Required in DB; normalization and length checks are importer/app validations                                 |
 | GPA          | decimal(3,2) | Yes      | Required with DB precision `(3,2)`; business range `0.00..4.00` is importer/app validation                   |
 | Email        | string       | Yes      | Required with DB unique index; lowercase normalization and strict format checks are importer/app validations |
-| Password     | string       | Yes      | Required in DB; trim/non-empty policy is importer/app validation                                             |
+| Password     | string       | Yes      | Required in DB; stores hashed password value (never plaintext) and is validated as non-empty                 |
 
 ## Teacher
 
@@ -35,7 +35,7 @@ This document includes both current persistence constraints and planned validati
 | IsAssigned    | bool   | Yes         | Required in DB; accepted input normalization is importer/app validation                                      |
 | ClassRoomName | string | Conditional | DB nullability currently allows null; conditional requirement is planned importer/app business rule          |
 | Email         | string | Yes         | Required with DB unique index; lowercase normalization and strict format checks are importer/app validations |
-| Password      | string | Yes         | Required in DB; trim/non-empty policy is importer/app validation                                             |
+| Password      | string | Yes         | Required in DB; stores hashed password value (never plaintext) and is validated as non-empty                 |
 | Credits       | int    | Yes         | Required in DB; value range checks are importer/app validation                                               |
 
 ## Immunization
