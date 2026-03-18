@@ -1,0 +1,107 @@
+@page "/state-rules"
+@using System.ComponentModel.DataAnnotations
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>State Rules</h1>
+
+<EditForm Model="_filterForm" OnValidSubmit="ApplyFilterAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<div>
+		<label for="ageMonths">Filter by Age Months (optional)</label>
+		<InputNumber id="ageMonths" @bind-Value="_filterForm.AgeMonths" />
+	</div>
+	<button type="submit" disabled="@_isLoading">Apply</button>
+	<button type="button" @onclick="ClearFilterAsync" disabled="@_isLoading">Clear</button>
+</EditForm>
+
+@if (_isLoading)
+{
+	<p>Loading state rules...</p>
+}
+else if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+else
+{
+	@if (_rules.Count == 0)
+	{
+		<p>No state rules found.</p>
+	}
+	else
+	{
+		<ul>
+			@foreach (var rule in _rules)
+			{
+				<li>@rule.AgeMonths months - @rule.VaccineName - @rule.DoseRequirement</li>
+			}
+		</ul>
+	}
+}
+
+@code {
+	private readonly StateRuleFilterModel _filterForm = new();
+	private IReadOnlyList<DayCareManagement.WebApp.Services.StateRuleResponse> _rules = Array.Empty<DayCareManagement.WebApp.Services.StateRuleResponse>();
+	private bool _isLoading = true;
+	private string? _errorMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadRulesAsync(null);
+	}
+
+	private async Task ApplyFilterAsync()
+	{
+		await LoadRulesAsync(_filterForm.AgeMonths);
+	}
+
+	private async Task ClearFilterAsync()
+	{
+		_filterForm.AgeMonths = null;
+		await LoadRulesAsync(null);
+	}
+
+	private async Task LoadRulesAsync(int? ageMonths)
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_isLoading = true;
+		_errorMessage = null;
+
+		try
+		{
+			_rules = await ApiClient.GetStateRulesAsync(ageMonths);
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+			return;
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Failed to load state rules.";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private sealed class StateRuleFilterModel
+	{
+		[Range(0, int.MaxValue)]
+		public int? AgeMonths { get; set; }
+	}
+}

@@ -11,6 +11,7 @@ public static class EndpointMappingExtensions
 			.RequireAuthorization();
 
 		featureGroup.MapStudentAndImmunizationEndpoints();
+		featureGroup.MapTeacherEndpoints();
 		featureGroup.MapRenewalEndpoints();
 		featureGroup.MapStateRuleEndpoints();
 

@@ -1,9 +1,54 @@
 @page "/students"
+@using System.ComponentModel.DataAnnotations
 @inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
 @inject DayCareManagement.WebApp.Services.AuthSession AuthSession
 @inject NavigationManager Navigation
 
 <h1>Students</h1>
+
+<h2>Create Student</h2>
+<EditForm Model="_createForm" OnValidSubmit="CreateStudentAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+
+	<div><label>Student Id</label> <InputNumber @bind-Value="_createForm.StudentId" /></div>
+	<div><label>First Name</label> <InputText @bind-Value="_createForm.FirstName" /></div>
+	<div><label>Last Name</label> <InputText @bind-Value="_createForm.LastName" /></div>
+	<div><label>Register Date</label> <InputDate @bind-Value="_createForm.RegisterDate" /></div>
+	<div><label>Age (Months)</label> <InputNumber @bind-Value="_createForm.AgeMonths" /></div>
+	<div><label>Father Name</label> <InputText @bind-Value="_createForm.FatherName" /></div>
+	<div><label>Mother Name</label> <InputText @bind-Value="_createForm.MotherName" /></div>
+	<div><label>Address</label> <InputText @bind-Value="_createForm.Address" /></div>
+	<div><label>Phone</label> <InputText @bind-Value="_createForm.PhoneNo" /></div>
+	<div><label>GPA</label> <InputNumber @bind-Value="_createForm.Gpa" /></div>
+	<div><label>Email</label> <InputText @bind-Value="_createForm.Email" /></div>
+	<div><label>Password</label> <InputText type="password" @bind-Value="_createForm.Password" /></div>
+	<button type="submit" disabled="@_isSubmitting">Create</button>
+</EditForm>
+
+@if (_isEditing)
+{
+	<h2>Update Student</h2>
+	<EditForm Model="_editForm" OnValidSubmit="UpdateStudentAsync">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div><label>Student Id</label> <InputNumber @bind-Value="_editForm.StudentId" disabled /></div>
+		<div><label>First Name</label> <InputText @bind-Value="_editForm.FirstName" /></div>
+		<div><label>Last Name</label> <InputText @bind-Value="_editForm.LastName" /></div>
+		<div><label>Register Date</label> <InputDate @bind-Value="_editForm.RegisterDate" /></div>
+		<div><label>Age (Months)</label> <InputNumber @bind-Value="_editForm.AgeMonths" /></div>
+		<div><label>Father Name</label> <InputText @bind-Value="_editForm.FatherName" /></div>
+		<div><label>Mother Name</label> <InputText @bind-Value="_editForm.MotherName" /></div>
+		<div><label>Address</label> <InputText @bind-Value="_editForm.Address" /></div>
+		<div><label>Phone</label> <InputText @bind-Value="_editForm.PhoneNo" /></div>
+		<div><label>GPA</label> <InputNumber @bind-Value="_editForm.Gpa" /></div>
+		<div><label>Email</label> <InputText @bind-Value="_editForm.Email" /></div>
+		<div><label>Password</label> <InputText type="password" @bind-Value="_editForm.Password" /></div>
+		<button type="submit" disabled="@_isSubmitting">Update</button>
+		<button type="button" @onclick="CancelEdit" disabled="@_isSubmitting">Cancel</button>
+	</EditForm>
+}
 
 @if (_isLoading)
 {
@@ -21,23 +66,44 @@ else
 			<li>
 				<a href="@($"/students/{student.StudentId}")">@student.StudentId - @student.FirstName @student.LastName</a>
 				<span> (@student.Email)</span>
+				<button type="button" @onclick="() => StartEdit(student)" disabled="@_isSubmitting">Edit</button>
+				<button type="button" @onclick="() => DeleteStudentAsync(student.StudentId)" disabled="@_isSubmitting">Delete</button>
 			</li>
 		}
 	</ul>
 }
 
+@if (_successMessage is not null)
+{
+	<p>@_successMessage</p>
+}
+
 @code {
 	private IReadOnlyList<DayCareManagement.WebApp.Services.StudentResponse> _students = Array.Empty<DayCareManagement.WebApp.Services.StudentResponse>();
+	private readonly StudentFormModel _createForm = new();
+	private StudentFormModel _editForm = new();
 	private bool _isLoading = true;
+	private bool _isSubmitting;
+	private bool _isEditing;
 	private string? _errorMessage;
+	private string? _successMessage;
 
 	protected override async Task OnInitializedAsync()
+	{
+		await LoadStudentsAsync();
+	}
+
+	private async Task LoadStudentsAsync()
 	{
 		if (!AuthSession.IsAuthenticated)
 		{
 			Navigation.NavigateTo("/login");
 			return;
 		}
+
+		_isLoading = true;
+		_errorMessage = null;
+		_successMessage = null;
 
 		try
 		{
@@ -56,6 +122,180 @@ else
 		finally
 		{
 			_isLoading = false;
+		}
+	}
+
+	private async Task CreateStudentAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.CreateStudentAsync(_createForm.ToRequest());
+			_createForm.Reset();
+			_isEditing = false;
+			_successMessage = "Student created.";
+		});
+	}
+
+	private void StartEdit(DayCareManagement.WebApp.Services.StudentResponse student)
+	{
+		_editForm = StudentFormModel.FromResponse(student);
+		_isEditing = true;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private async Task UpdateStudentAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.UpdateStudentAsync(_editForm.StudentId, _editForm.ToRequest());
+			_isEditing = false;
+			_successMessage = "Student updated.";
+		});
+	}
+
+	private async Task DeleteStudentAsync(int studentId)
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.DeleteStudentAsync(studentId);
+			if (_isEditing && _editForm.StudentId == studentId)
+			{
+				_isEditing = false;
+			}
+
+			_successMessage = "Student deleted.";
+		});
+	}
+
+	private async Task ExecuteMutationAsync(Func<Task> mutation)
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_errorMessage = null;
+		_successMessage = null;
+		_isSubmitting = true;
+
+		try
+		{
+			await mutation();
+			_students = await ApiClient.GetStudentsAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Unable to complete student request.";
+		}
+		finally
+		{
+			_isSubmitting = false;
+		}
+	}
+
+	private void CancelEdit()
+	{
+		_isEditing = false;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private sealed class StudentFormModel
+	{
+		[Required]
+		[Range(1, int.MaxValue)]
+		public int StudentId { get; set; }
+
+		[Required]
+		public string FirstName { get; set; } = string.Empty;
+
+		[Required]
+		public string LastName { get; set; } = string.Empty;
+
+		[Required]
+		public DateOnly RegisterDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+		[Range(0, int.MaxValue)]
+		public int AgeMonths { get; set; }
+
+		[Required]
+		public string FatherName { get; set; } = string.Empty;
+
+		[Required]
+		public string MotherName { get; set; } = string.Empty;
+
+		[Required]
+		public string Address { get; set; } = string.Empty;
+
+		[Required]
+		public string PhoneNo { get; set; } = string.Empty;
+
+		[Range(0, 4)]
+		public decimal Gpa { get; set; }
+
+		[Required]
+		[EmailAddress]
+		public string Email { get; set; } = string.Empty;
+
+		[Required]
+		public string Password { get; set; } = string.Empty;
+
+		public DayCareManagement.WebApp.Services.StudentWriteRequest ToRequest() =>
+			new(
+				StudentId,
+				FirstName,
+				LastName,
+				RegisterDate,
+				AgeMonths,
+				FatherName,
+				MotherName,
+				Address,
+				PhoneNo,
+				Gpa,
+				Email,
+				Password);
+
+		public static StudentFormModel FromResponse(DayCareManagement.WebApp.Services.StudentResponse response) =>
+			new()
+			{
+				StudentId = response.StudentId,
+				FirstName = response.FirstName,
+				LastName = response.LastName,
+				RegisterDate = response.RegisterDate,
+				AgeMonths = response.AgeMonths,
+				FatherName = response.FatherName,
+				MotherName = response.MotherName,
+				Address = response.Address,
+				PhoneNo = response.PhoneNo,
+				Gpa = response.GPA,
+				Email = response.Email
+			};
+
+		public void Reset()
+		{
+			StudentId = 0;
+			FirstName = string.Empty;
+			LastName = string.Empty;
+			RegisterDate = DateOnly.FromDateTime(DateTime.Today);
+			AgeMonths = 0;
+			FatherName = string.Empty;
+			MotherName = string.Empty;
+			Address = string.Empty;
+			PhoneNo = string.Empty;
+			Gpa = 0;
+			Email = string.Empty;
+			Password = string.Empty;
 		}
 	}
 }

@@ -4,8 +4,20 @@
 
 <header>
 	<a href="/">Home</a> |
-	<a href="/students">Students</a> |
-	<a href="/login">Login</a>
+	@if (AuthSession.IsAuthenticated)
+	{
+		<a href="/students">Students</a>
+		<span> | </span>
+		<a href="/teachers">Teachers</a>
+		<span> | </span>
+		<a href="/renewals">Renewals</a>
+		<span> | </span>
+		<a href="/state-rules">State Rules</a>
+	}
+	else
+	{
+		<a href="/login">Login</a>
+	}
 	@if (AuthSession.IsAuthenticated)
 	{
 		<span> | </span>

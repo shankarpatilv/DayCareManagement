@@ -1,4 +1,5 @@
 @page "/students/{StudentId:int}"
+@using System.ComponentModel.DataAnnotations
 @inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
 @inject DayCareManagement.WebApp.Services.AuthSession AuthSession
 @inject NavigationManager Navigation
@@ -26,6 +27,34 @@ else
 	<p><strong>Register date:</strong> @_student.RegisterDate</p>
 
 	<h2>Immunizations</h2>
+	<h3>Add Immunization</h3>
+	<EditForm Model="_createForm" OnValidSubmit="CreateImmunizationAsync">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+		<div><label>Immunization Id</label> <InputNumber @bind-Value="_createForm.ImmunizationId" /></div>
+		<div><label>Name</label> <InputText @bind-Value="_createForm.ImmunizationName" /></div>
+		<div><label>Duration</label> <InputText @bind-Value="_createForm.Duration" /></div>
+		<div><label>Date</label> <InputDate @bind-Value="_createForm.ImmunizationDate" /></div>
+		<div><label>Status</label> <InputCheckbox @bind-Value="_createForm.Status" /></div>
+		<button type="submit" disabled="@_isSubmitting">Add</button>
+	</EditForm>
+
+	@if (_isEditing)
+	{
+		<h3>Update Immunization</h3>
+		<EditForm Model="_editForm" OnValidSubmit="UpdateImmunizationAsync">
+			<DataAnnotationsValidator />
+			<ValidationSummary />
+			<div><label>Immunization Id</label> <InputNumber @bind-Value="_editForm.ImmunizationId" disabled /></div>
+			<div><label>Date</label> <InputDate @bind-Value="_editForm.ImmunizationDate" disabled /></div>
+			<div><label>Name</label> <InputText @bind-Value="_editForm.ImmunizationName" /></div>
+			<div><label>Duration</label> <InputText @bind-Value="_editForm.Duration" /></div>
+			<div><label>Status</label> <InputCheckbox @bind-Value="_editForm.Status" /></div>
+			<button type="submit" disabled="@_isSubmitting">Update</button>
+			<button type="button" @onclick="CancelEdit" disabled="@_isSubmitting">Cancel</button>
+		</EditForm>
+	}
+
 	@if (_immunizations.Count == 0)
 	{
 		<p>No immunizations found.</p>
@@ -37,9 +66,16 @@ else
 			{
 				<li>
 					@immunization.ImmunizationName - @immunization.ImmunizationDate - @immunization.Duration - @(immunization.Status ? "Complete" : "Pending")
+					<button type="button" @onclick="() => StartEdit(immunization)" disabled="@_isSubmitting">Edit</button>
+					<button type="button" @onclick="() => DeleteImmunizationAsync(immunization)" disabled="@_isSubmitting">Delete</button>
 				</li>
 			}
 		</ul>
+	}
+
+	@if (_successMessage is not null)
+	{
+		<p>@_successMessage</p>
 	}
 
 	<p><a href="/students">Back to students</a></p>
@@ -51,8 +87,13 @@ else
 
 	private DayCareManagement.WebApp.Services.StudentResponse? _student;
 	private IReadOnlyList<DayCareManagement.WebApp.Services.ImmunizationResponse> _immunizations = Array.Empty<DayCareManagement.WebApp.Services.ImmunizationResponse>();
+	private readonly ImmunizationFormModel _createForm = new();
+	private ImmunizationFormModel _editForm = new();
 	private bool _isLoading = true;
+	private bool _isSubmitting;
+	private bool _isEditing;
 	private string? _errorMessage;
+	private string? _successMessage;
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -85,6 +126,139 @@ else
 		finally
 		{
 			_isLoading = false;
+		}
+	}
+
+	private async Task CreateImmunizationAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.CreateStudentImmunizationAsync(StudentId, _createForm.ToCreateRequest());
+			_createForm.Reset();
+			_successMessage = "Immunization added.";
+		});
+	}
+
+	private void StartEdit(DayCareManagement.WebApp.Services.ImmunizationResponse immunization)
+	{
+		_editForm = ImmunizationFormModel.FromResponse(immunization);
+		_isEditing = true;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private async Task UpdateImmunizationAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.UpdateStudentImmunizationAsync(
+				StudentId,
+				_editForm.ImmunizationId,
+				_editForm.ImmunizationDate,
+				_editForm.ToUpdateRequest());
+
+			_isEditing = false;
+			_successMessage = "Immunization updated.";
+		});
+	}
+
+	private async Task DeleteImmunizationAsync(DayCareManagement.WebApp.Services.ImmunizationResponse immunization)
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.DeleteStudentImmunizationAsync(StudentId, immunization.ImmunizationId, immunization.ImmunizationDate);
+			if (_isEditing && _editForm.ImmunizationId == immunization.ImmunizationId && _editForm.ImmunizationDate == immunization.ImmunizationDate)
+			{
+				_isEditing = false;
+			}
+
+			_successMessage = "Immunization deleted.";
+		});
+	}
+
+	private async Task ExecuteMutationAsync(Func<Task> mutation)
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_errorMessage = null;
+		_successMessage = null;
+		_isSubmitting = true;
+
+		try
+		{
+			await mutation();
+			_immunizations = await ApiClient.GetStudentImmunizationsAsync(StudentId);
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Unable to complete immunization request.";
+		}
+		finally
+		{
+			_isSubmitting = false;
+		}
+	}
+
+	private void CancelEdit()
+	{
+		_isEditing = false;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private sealed class ImmunizationFormModel
+	{
+		[Required]
+		[Range(1, int.MaxValue)]
+		public int ImmunizationId { get; set; }
+
+		[Required]
+		public string ImmunizationName { get; set; } = string.Empty;
+
+		[Required]
+		public string Duration { get; set; } = string.Empty;
+
+		[Required]
+		public DateOnly ImmunizationDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+		public bool Status { get; set; }
+
+		public DayCareManagement.WebApp.Services.ImmunizationCreateRequest ToCreateRequest() =>
+			new(ImmunizationId, ImmunizationName, Duration, ImmunizationDate, Status);
+
+		public DayCareManagement.WebApp.Services.ImmunizationUpdateRequest ToUpdateRequest() =>
+			new(ImmunizationName, Duration, Status);
+
+		public static ImmunizationFormModel FromResponse(DayCareManagement.WebApp.Services.ImmunizationResponse response) =>
+			new()
+			{
+				ImmunizationId = response.ImmunizationId,
+				ImmunizationName = response.ImmunizationName,
+				Duration = response.Duration,
+				ImmunizationDate = response.ImmunizationDate,
+				Status = response.Status
+			};
+
+		public void Reset()
+		{
+			ImmunizationId = 0;
+			ImmunizationName = string.Empty;
+			Duration = string.Empty;
+			ImmunizationDate = DateOnly.FromDateTime(DateTime.Today);
+			Status = false;
 		}
 	}
 }

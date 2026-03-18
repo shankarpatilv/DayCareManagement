@@ -166,6 +166,20 @@ public static class StudentImmunizationEndpoints
 			return Results.NoContent();
 		}).RequireAuthorization("TeacherOnly");
 
+		featureGroup.MapDelete("/students/{studentId:int}", async (int studentId, DayCareManagementDbContext dbContext, CancellationToken cancellationToken) =>
+		{
+			var student = await dbContext.Students
+				.SingleOrDefaultAsync(entity => entity.StudentId == studentId, cancellationToken);
+			if (student is null)
+			{
+				return Results.NotFound();
+			}
+
+			dbContext.Students.Remove(student);
+			await dbContext.SaveChangesAsync(cancellationToken);
+			return Results.NoContent();
+		}).RequireAuthorization("TeacherOnly");
+
 		featureGroup.MapGet("/students/{studentId:int}/immunizations", async (int studentId, DayCareManagementDbContext dbContext, CancellationToken cancellationToken) =>
 		{
 			var studentExists = await dbContext.Students

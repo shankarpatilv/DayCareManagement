@@ -1,0 +1,276 @@
+@page "/teachers"
+@using System.ComponentModel.DataAnnotations
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>Teachers</h1>
+
+<h2>Create Teacher</h2>
+<EditForm Model="_createForm" OnValidSubmit="CreateTeacherAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+	<div><label>Teacher Id</label> <InputNumber @bind-Value="_createForm.TeacherId" /></div>
+	<div><label>First Name</label> <InputText @bind-Value="_createForm.FirstName" /></div>
+	<div><label>Last Name</label> <InputText @bind-Value="_createForm.LastName" /></div>
+	<div><label>Register Date</label> <InputDate @bind-Value="_createForm.RegisterDate" /></div>
+	<div><label>Assigned</label> <InputCheckbox @bind-Value="_createForm.IsAssigned" /></div>
+	<div><label>Class Room Name</label> <InputText @bind-Value="_createForm.ClassRoomName" /></div>
+	<div><label>Email</label> <InputText @bind-Value="_createForm.Email" /></div>
+	<div><label>Password</label> <InputText type="password" @bind-Value="_createForm.Password" /></div>
+	<div><label>Credits</label> <InputNumber @bind-Value="_createForm.Credits" /></div>
+	<button type="submit" disabled="@_isSubmitting">Create</button>
+</EditForm>
+
+@if (_isEditing)
+{
+	<h2>Update Teacher</h2>
+	<EditForm Model="_editForm" OnValidSubmit="UpdateTeacherAsync">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+		<div><label>Teacher Id</label> <InputNumber @bind-Value="_editForm.TeacherId" disabled /></div>
+		<div><label>First Name</label> <InputText @bind-Value="_editForm.FirstName" /></div>
+		<div><label>Last Name</label> <InputText @bind-Value="_editForm.LastName" /></div>
+		<div><label>Register Date</label> <InputDate @bind-Value="_editForm.RegisterDate" /></div>
+		<div><label>Assigned</label> <InputCheckbox @bind-Value="_editForm.IsAssigned" /></div>
+		<div><label>Class Room Name</label> <InputText @bind-Value="_editForm.ClassRoomName" /></div>
+		<div><label>Email</label> <InputText @bind-Value="_editForm.Email" /></div>
+		<div><label>Password</label> <InputText type="password" @bind-Value="_editForm.Password" /></div>
+		<div><label>Credits</label> <InputNumber @bind-Value="_editForm.Credits" /></div>
+		<button type="submit" disabled="@_isSubmitting">Update</button>
+		<button type="button" @onclick="CancelEdit" disabled="@_isSubmitting">Cancel</button>
+	</EditForm>
+}
+
+@if (_isLoading)
+{
+	<p>Loading teachers...</p>
+}
+else if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+else
+{
+	<ul>
+		@foreach (var teacher in _teachers)
+		{
+			<li>
+				@teacher.TeacherId - @teacher.FirstName @teacher.LastName (@teacher.Email)
+				<button type="button" @onclick="() => StartEdit(teacher)" disabled="@_isSubmitting">Edit</button>
+				<button type="button" @onclick="() => DeleteTeacherAsync(teacher.TeacherId)" disabled="@_isSubmitting">Delete</button>
+			</li>
+		}
+	</ul>
+}
+
+@if (_successMessage is not null)
+{
+	<p>@_successMessage</p>
+}
+
+@code {
+	private IReadOnlyList<DayCareManagement.WebApp.Services.TeacherResponse> _teachers = Array.Empty<DayCareManagement.WebApp.Services.TeacherResponse>();
+	private readonly TeacherFormModel _createForm = new();
+	private TeacherFormModel _editForm = new();
+	private bool _isLoading = true;
+	private bool _isSubmitting;
+	private bool _isEditing;
+	private string? _errorMessage;
+	private string? _successMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadTeachersAsync();
+	}
+
+	private async Task LoadTeachersAsync()
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_isLoading = true;
+		_errorMessage = null;
+		_successMessage = null;
+
+		try
+		{
+			_teachers = await ApiClient.GetTeachersAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+			return;
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Failed to load teachers.";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private async Task CreateTeacherAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.CreateTeacherAsync(_createForm.ToRequest());
+			_createForm.Reset();
+			_isEditing = false;
+			_successMessage = "Teacher created.";
+		});
+	}
+
+	private void StartEdit(DayCareManagement.WebApp.Services.TeacherResponse teacher)
+	{
+		_editForm = TeacherFormModel.FromResponse(teacher);
+		_isEditing = true;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private async Task UpdateTeacherAsync()
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.UpdateTeacherAsync(_editForm.TeacherId, _editForm.ToRequest());
+			_isEditing = false;
+			_successMessage = "Teacher updated.";
+		});
+	}
+
+	private async Task DeleteTeacherAsync(int teacherId)
+	{
+		await ExecuteMutationAsync(async () =>
+		{
+			await ApiClient.DeleteTeacherAsync(teacherId);
+			if (_isEditing && _editForm.TeacherId == teacherId)
+			{
+				_isEditing = false;
+			}
+
+			_successMessage = "Teacher deleted.";
+		});
+	}
+
+	private async Task ExecuteMutationAsync(Func<Task> mutation)
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_errorMessage = null;
+		_successMessage = null;
+		_isSubmitting = true;
+
+		try
+		{
+			await mutation();
+			_teachers = await ApiClient.GetTeachersAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Unable to complete teacher request.";
+		}
+		finally
+		{
+			_isSubmitting = false;
+		}
+	}
+
+	private void CancelEdit()
+	{
+		_isEditing = false;
+		_errorMessage = null;
+		_successMessage = null;
+	}
+
+	private sealed class TeacherFormModel
+	{
+		[Required]
+		[Range(1, int.MaxValue)]
+		public int TeacherId { get; set; }
+
+		[Required]
+		public string FirstName { get; set; } = string.Empty;
+
+		[Required]
+		public string LastName { get; set; } = string.Empty;
+
+		[Required]
+		public DateOnly RegisterDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+		public bool IsAssigned { get; set; }
+
+		public string? ClassRoomName { get; set; }
+
+		[Required]
+		[EmailAddress]
+		public string Email { get; set; } = string.Empty;
+
+		[Required]
+		public string Password { get; set; } = string.Empty;
+
+		[Range(0, int.MaxValue)]
+		public int Credits { get; set; }
+
+		public DayCareManagement.WebApp.Services.TeacherWriteRequest ToRequest() =>
+			new(
+				TeacherId,
+				FirstName,
+				LastName,
+				RegisterDate,
+				IsAssigned,
+				string.IsNullOrWhiteSpace(ClassRoomName) ? null : ClassRoomName,
+				Email,
+				Password,
+				Credits);
+
+		public static TeacherFormModel FromResponse(DayCareManagement.WebApp.Services.TeacherResponse response) =>
+			new()
+			{
+				TeacherId = response.TeacherId,
+				FirstName = response.FirstName,
+				LastName = response.LastName,
+				RegisterDate = response.RegisterDate,
+				IsAssigned = response.IsAssigned,
+				ClassRoomName = response.ClassRoomName,
+				Email = response.Email,
+				Credits = response.Credits
+			};
+
+		public void Reset()
+		{
+			TeacherId = 0;
+			FirstName = string.Empty;
+			LastName = string.Empty;
+			RegisterDate = DateOnly.FromDateTime(DateTime.Today);
+			IsAssigned = false;
+			ClassRoomName = null;
+			Email = string.Empty;
+			Password = string.Empty;
+			Credits = 0;
+		}
+	}
+}

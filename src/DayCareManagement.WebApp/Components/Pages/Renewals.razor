@@ -1,0 +1,125 @@
+@page "/renewals"
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>Renewals</h1>
+
+@if (_isLoading)
+{
+	<p>Loading due renewals...</p>
+}
+else if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+else
+{
+	@if (_dueRenewals.Count == 0)
+	{
+		<p>No students are currently due.</p>
+	}
+	else
+	{
+		<ul>
+			@foreach (var renewal in _dueRenewals)
+			{
+				<li>
+					@renewal.StudentId - @renewal.FirstName @renewal.LastName | Registered: @renewal.RegisterDate | As Of: @renewal.AsOfDate
+					<button type="button" @onclick="() => ApplyRenewalAsync(renewal.StudentId)" disabled="@_isSubmitting">Apply Renewal</button>
+				</li>
+			}
+		</ul>
+	}
+}
+
+@if (_successMessage is not null)
+{
+	<p>@_successMessage</p>
+}
+
+@code {
+	private IReadOnlyList<DayCareManagement.WebApp.Services.RenewalDueResponse> _dueRenewals = Array.Empty<DayCareManagement.WebApp.Services.RenewalDueResponse>();
+	private bool _isLoading = true;
+	private bool _isSubmitting;
+	private string? _errorMessage;
+	private string? _successMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDueRenewalsAsync();
+	}
+
+	private async Task LoadDueRenewalsAsync()
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_isLoading = true;
+		_errorMessage = null;
+		_successMessage = null;
+
+		try
+		{
+			_dueRenewals = await ApiClient.GetRenewalsDueAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+			return;
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Failed to load renewals.";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private async Task ApplyRenewalAsync(int studentId)
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		_errorMessage = null;
+		_successMessage = null;
+		_isSubmitting = true;
+
+		try
+		{
+			var response = await ApiClient.ApplyRenewalAsync(studentId);
+			_successMessage = $"Renewal applied for student {response.StudentId}. New register date: {response.RegisterDate}.";
+			_dueRenewals = await ApiClient.GetRenewalsDueAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+		}
+		catch (InvalidOperationException ex)
+		{
+			_errorMessage = ex.Message;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Unable to apply renewal.";
+		}
+		finally
+		{
+			_isSubmitting = false;
+		}
+	}
+}

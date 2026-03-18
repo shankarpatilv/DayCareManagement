@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using DayCareManagement.WebApi.Contracts;
 using DayCareManagement.WebApi.Validation;
 using Xunit;
 
@@ -40,6 +41,50 @@ public sealed class ApiValidationTests
     }
 
     [Fact]
+    public void NormalizePasswordForPersistence_TrimsSupportedStoredHash()
+    {
+        var sha256Hex = ComputeSha256Hex("P@ssw0rd123");
+        var candidate = $"  {sha256Hex}  ";
+
+        var normalized = ApiValidation.NormalizePasswordForPersistence(candidate);
+
+        Assert.Equal(sha256Hex, normalized);
+    }
+
+    [Fact]
+    public void TryValidateTeacherWriteRequest_RejectsNegativeCredits()
+    {
+        var request = CreateValidTeacherRequest() with { Credits = -1 };
+
+        var success = ApiValidation.TryValidateTeacherWriteRequest(request, out var validationError);
+
+        Assert.False(success);
+        Assert.Equal("Credits must be greater than or equal to zero.", validationError);
+    }
+
+    [Fact]
+    public void TryValidateTeacherWriteRequest_RejectsMissingRequiredFields()
+    {
+        var request = CreateValidTeacherRequest() with { FirstName = " ", LastName = "", Email = "", Password = "" };
+
+        var success = ApiValidation.TryValidateTeacherWriteRequest(request, out var validationError);
+
+        Assert.False(success);
+        Assert.Equal("Teacher firstName, lastName, email, and password are required.", validationError);
+    }
+
+    [Fact]
+    public void TryValidateTeacherWriteRequest_AcceptsValidRequest()
+    {
+        var request = CreateValidTeacherRequest();
+
+        var success = ApiValidation.TryValidateTeacherWriteRequest(request, out var validationError);
+
+        Assert.True(success);
+        Assert.Null(validationError);
+    }
+
+    [Fact]
     public void TryParseDateOnly_AcceptsExactIsoDate()
     {
         var success = ApiValidation.TryParseDateOnly("2026-03-18", out var parsedDate);
@@ -65,5 +110,19 @@ public sealed class ApiValidationTests
         using var sha256 = SHA256.Create();
         var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static TeacherWriteRequest CreateValidTeacherRequest()
+    {
+        return new TeacherWriteRequest(
+            TeacherId: 10,
+            FirstName: "Teacher",
+            LastName: "One",
+            RegisterDate: new DateOnly(2026, 3, 18),
+            IsAssigned: true,
+            ClassRoomName: "Blue Room",
+            Email: "teacher.one@example.com",
+            Password: "Secret#123",
+            Credits: 12);
     }
 }

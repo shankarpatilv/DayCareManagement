@@ -47,6 +47,33 @@ public static class ApiValidation
 		return true;
 	}
 
+	public static bool TryValidateTeacherWriteRequest(TeacherWriteRequest request, out string? validationError)
+	{
+		if (request.TeacherId <= 0)
+		{
+			validationError = "TeacherId must be greater than zero.";
+			return false;
+		}
+
+		if (request.Credits < 0)
+		{
+			validationError = "Credits must be greater than or equal to zero.";
+			return false;
+		}
+
+		if (string.IsNullOrWhiteSpace(request.FirstName) ||
+			string.IsNullOrWhiteSpace(request.LastName) ||
+			string.IsNullOrWhiteSpace(request.Email) ||
+			string.IsNullOrWhiteSpace(request.Password))
+		{
+			validationError = "Teacher firstName, lastName, email, and password are required.";
+			return false;
+		}
+
+		validationError = null;
+		return true;
+	}
+
 	public static bool TryValidateImmunizationCreateRequest(ImmunizationCreateRequest request, out string? validationError)
 	{
 		if (request.ImmunizationId <= 0)
