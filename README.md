@@ -1,6 +1,6 @@
 # DayCareManagement
 
-Milestone M1 foundation scaffold for migrating the Java Day Care Management System into a clean .NET 8 web architecture.
+Milestones M1 + M2 persistence foundation for migrating the Java Day Care Management System into a clean .NET 8 web architecture.
 
 ## Architecture
 
@@ -11,19 +11,52 @@ Milestone M1 foundation scaffold for migrating the Java Day Care Management Syst
 - `src/DayCareManagement.WebApp` — Blazor web application host.
 - `tests/DayCareManagement.Application.Tests` — Unit tests for application-layer behavior.
 
-## M1 Scope
+## Current Status
 
-- Project layout and baseline solution conventions.
-- Minimal project references between layers.
-- Starter abstractions and one infrastructure implementation.
-- Minimal host bootstrapping for Web API and Web App.
-- Basic test project with placeholder compiling test.
+- M1 foundation: project layout, baseline conventions, and host bootstrapping.
+- M2 persistence foundation: domain entities, EF Core mappings, PostgreSQL context wiring, and initial migration.
+- Layered solution structure and references compile with current solution setup.
+- Test project scaffold is present and included in solution-level test runs.
 
-## Build (when .NET SDK is available)
+## Quickstart
+
+### Prerequisites
+
+- .NET 8 SDK
+- PostgreSQL
+- EF Core CLI (`dotnet-ef`)
+
+Install EF CLI globally (recommended):
+
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+### Configure local connection string
+
+From `DayCareManagement/`:
+
+```bash
+cp .env.example .env
+```
+
+Set `DAYCAREMANAGEMENT_CONNECTIONSTRING` in `.env`.
+
+### Restore, build, and test
 
 ```bash
 dotnet restore DayCareManagement.sln
 dotnet build DayCareManagement.sln
+dotnet test DayCareManagement.sln
+```
+
+### Apply database migration
+
+```bash
+dotnet ef database update \
+  --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj \
+  --startup-project src/DayCareManagement.WebApi/DayCareManagement.WebApi.csproj \
+  --context DayCareManagementDbContext
 ```
 
 ## Collaboration Workflow
@@ -31,10 +64,9 @@ dotnet build DayCareManagement.sln
 - GitHub setup and repository bootstrap: [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md)
 - Branching, release, and hotfix process: [docs/GIT-FLOW.md](docs/GIT-FLOW.md)
 
-## Next Steps (M2)
+## Next Steps (M3+)
 
-- Add domain entities for students, teachers, classrooms, immunizations.
-- Add application use cases and DTO contracts.
-- Add persistence abstractions and infrastructure data adapters.
-- Add first API endpoints and initial Blazor pages.
-- Add test coverage for core business rules and use cases.
+- Implement application-layer use cases and validation workflows.
+- Add importer pipeline with CSV validation and mapping rules.
+- Add API endpoints and corresponding Web App features.
+- Expand automated tests for business rules and integration paths.
