@@ -36,3 +36,16 @@ packages/
 
 # Local personal learning notes
 learn/
+
+# Environment files
+.env
+.env.local
+.env.example
+
+# Generated artifacts
+migration.sql
+
+# Local .NET tool manifest (global tools mode)
+dotnet-tools.json
+
+scripts/
