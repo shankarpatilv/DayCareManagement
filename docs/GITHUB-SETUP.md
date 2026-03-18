@@ -2,6 +2,8 @@
 
 Run all commands from the `DayCareManagement` folder.
 
+Before running the app locally, copy `.env.example` to `.env` and set your local database password in `DAYCAREMANAGEMENT_CONNECTIONSTRING`.
+
 ## 1) Initialize local Git repository
 
 ```bash

@@ -1,6 +1,6 @@
 # DayCareManagement
 
-Milestone M1 foundation scaffold for migrating the Java Day Care Management System into a clean .NET 10 web architecture.
+Milestone M1 foundation scaffold for migrating the Java Day Care Management System into a clean .NET 8 web architecture.
 
 ## Architecture
 
