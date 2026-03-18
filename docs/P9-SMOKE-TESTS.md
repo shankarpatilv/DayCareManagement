@@ -31,7 +31,7 @@ Base URL examples assume `http://localhost:5125`.
    - `POST /students` with valid payload.
    - Expected: `201/200` success and student appears in subsequent `GET /students/{studentId}`.
    - `PUT /students/{studentId}` update one field.
-    Expected: `204 NoContent`.
+     Expected: `204 NoContent`.
    - `DELETE /students/{studentId}` for test record.
    - Expected: success status and record no longer retrievable.
 
@@ -94,6 +94,8 @@ Base URL examples assume `http://localhost:5115`.
    - Expected: redirect to login or unauthorized handling.
 
 ## Execution Record Template
+
+Runtime note (2026-03-18): local .NET 8 ASP.NET runtime blocker is resolved; release build/test/migration checks now pass.
 
 | Area   | Step                   | Result (Pass/Fail/Blocked) | Evidence |
 | ------ | ---------------------- | -------------------------- | -------- |

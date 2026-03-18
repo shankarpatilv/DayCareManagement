@@ -60,11 +60,11 @@ Purpose: Define the minimum operational gate for releasing the current migrated 
 
 ## Evidence Table
 
-| Gate                  | Evidence Required                                               | Owner | Status  | Link / Artifact |
-| --------------------- | --------------------------------------------------------------- | ----- | ------- | --------------- |
-| Build                 | `dotnet build DayCareManagement.sln` output (release branch)    | Team  | Pending | TBD             |
-| Tests                 | `dotnet test DayCareManagement.sln` output (or blocker record)  | Team  | Pending | TBD             |
-| Migration consistency | CI `has-pending-model-changes` step pass                        | Team  | Pending | TBD             |
-| API smoke tests       | Completed [P9-SMOKE-TESTS.md](P9-SMOKE-TESTS.md) API section    | Team  | Pending | TBD             |
-| UI smoke tests        | Completed [P9-SMOKE-TESTS.md](P9-SMOKE-TESTS.md) WebApp section | Team  | Pending | TBD             |
-| Rollback readiness    | Rollback owner + dry run confirmation                           | Team  | Pending | TBD             |
+| Gate                  | Evidence Required                                               | Owner | Status  | Link / Artifact                                                                                                 |
+| --------------------- | --------------------------------------------------------------- | ----- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| Build                 | `dotnet build DayCareManagement.sln` output (release branch)    | Team  | Pass    | Local run (2026-03-18): `dotnet build DayCareManagement.sln --configuration Release --no-restore`               |
+| Tests                 | `dotnet test DayCareManagement.sln` output (or blocker record)  | Team  | Pass    | Local run (2026-03-18): `dotnet test DayCareManagement.sln --configuration Release --no-build` (35 passed)      |
+| Migration consistency | CI `has-pending-model-changes` step pass                        | Team  | Pass    | Local run (2026-03-18): `dotnet ef migrations has-pending-model-changes ... --configuration Release --no-build` |
+| API smoke tests       | Completed [P9-SMOKE-TESTS.md](P9-SMOKE-TESTS.md) API section    | Team  | Pending | TBD                                                                                                             |
+| UI smoke tests        | Completed [P9-SMOKE-TESTS.md](P9-SMOKE-TESTS.md) WebApp section | Team  | Pending | TBD                                                                                                             |
+| Rollback readiness    | Rollback owner + dry run confirmation                           | Team  | Pending | TBD                                                                                                             |
