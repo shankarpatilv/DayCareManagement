@@ -1,0 +1,35 @@
+# Build
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / VS Code
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Rider
+.idea/
+
+# Test artifacts
+TestResults/
+*.coverage
+*.coveragexml
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# NuGet
+*.nupkg
+packages/
