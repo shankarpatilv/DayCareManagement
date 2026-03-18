@@ -13,7 +13,7 @@ This document includes both current persistence constraints and planned validati
 | ------------ | ------------ | -------- | ------------------------------------------------------------------------------------------------------------ |
 | FirstName    | string       | Yes      | Required in DB; trim/non-empty/length rules are importer/app expectations                                    |
 | LastName     | string       | Yes      | Required in DB; trim/non-empty/length rules are importer/app expectations                                    |
-| RegisterDate | date         | Yes      | Stored as date in DB; `dd/MM/yyyy` parsing is importer/app validation                                        |
+| RegisterDate | date         | Yes      | Stored as date in DB; API/importer validations use strict `yyyy-MM-dd` parsing conventions                   |
 | StudentId    | int          | Yes      | Primary key in DB; positive-range validation is importer/app expectation                                     |
 | AgeMonths    | int          | Yes      | Required in DB; range `0..120` is importer/app validation                                                    |
 | FatherName   | string       | Yes      | Required in DB; trim/non-empty/length rules are importer/app expectations                                    |
@@ -30,7 +30,7 @@ This document includes both current persistence constraints and planned validati
 | ------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------ |
 | FirstName     | string | Yes         | Required in DB; trim/non-empty/length rules are importer/app expectations                                    |
 | LastName      | string | Yes         | Required in DB; trim/non-empty/length rules are importer/app expectations                                    |
-| RegisterDate  | date   | Yes         | Stored as date in DB; `dd/MM/yyyy` parsing is importer/app validation                                        |
+| RegisterDate  | date   | Yes         | Stored as date in DB; API/importer validations use strict `yyyy-MM-dd` parsing conventions                   |
 | TeacherId     | int    | Yes         | Primary key in DB; positive-range validation is importer/app expectation                                     |
 | IsAssigned    | bool   | Yes         | Required in DB; accepted input normalization is importer/app validation                                      |
 | ClassRoomName | string | Conditional | DB nullability currently allows null; conditional requirement is planned importer/app business rule          |
@@ -46,7 +46,7 @@ This document includes both current persistence constraints and planned validati
 | ImmunizationId   | int    | Yes      | Required in DB; positive-range checks are importer/app validation                    |
 | ImmunizationName | string | Yes      | Required in DB; trim/non-empty rules are importer/app expectations                   |
 | Duration         | string | Yes      | Required in DB; normalization rules are importer/app validation                      |
-| ImmunizationDate | date   | Yes      | Stored as date in DB; `dd/MM/yyyy` parsing is importer/app validation                |
+| ImmunizationDate | date   | Yes      | Stored as date in DB; route/body validations use strict `yyyy-MM-dd` parsing         |
 | Status           | bool   | Yes      | Required in DB; accepted input normalization is importer/app validation              |
 
 ## State Rule
@@ -60,6 +60,6 @@ This document includes both current persistence constraints and planned validati
 ## Cross-entity constraints
 
 - Currently enforced in DB: primary keys (`Student.StudentId`, `Teacher.TeacherId`), foreign key (`Immunization.StudentId` -> `Student.StudentId`), composite PK uniqueness on immunizations, and case-insensitive unique email indexes on `Student.Email` and `Teacher.Email`.
-- Planned in importer/application layer: email normalization policy at input boundaries and date input parsing conventions (for example, `dd/MM/yyyy`).
+- Planned in importer/application layer: email normalization policy at input boundaries and date input parsing conventions (strict `yyyy-MM-dd`).
 
 <!-- markdownlint-enable MD060 -->

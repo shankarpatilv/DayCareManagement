@@ -4,8 +4,8 @@
 
 | Table         | Primary Key                                                    | Notes                                                  |
 | ------------- | -------------------------------------------------------------- | ------------------------------------------------------ |
-| Students      | `StudentId`                                                    | Unique email index on `Email`                          |
-| Teachers      | `TeacherId`                                                    | Unique email index on `Email`                          |
+| Students      | `StudentId`                                                    | Case-insensitive unique email index on `lower(Email)`  |
+| Teachers      | `TeacherId`                                                    | Case-insensitive unique email index on `lower(Email)`  |
 | Immunizations | Composite: (`StudentId`, `ImmunizationId`, `ImmunizationDate`) | FK `StudentId` -> `Students.StudentId`; cascade delete |
 | StateRules    | Composite: (`VaccineName`, `DoseRequirement`, `AgeMonths`)     | State vaccine dose rules                               |
 

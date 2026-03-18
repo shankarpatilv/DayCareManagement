@@ -1,0 +1,26 @@
+@inherits LayoutComponentBase
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<header>
+	<a href="/">Home</a> |
+	<a href="/students">Students</a> |
+	<a href="/login">Login</a>
+	@if (AuthSession.IsAuthenticated)
+	{
+		<span> | </span>
+		<button type="button" @onclick="Logout">Logout</button>
+	}
+</header>
+
+<main>
+	@Body
+</main>
+
+@code {
+	private void Logout()
+	{
+		AuthSession.Clear();
+		Navigation.NavigateTo("/login");
+	}
+}

@@ -1,0 +1,61 @@
+@page "/students"
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>Students</h1>
+
+@if (_isLoading)
+{
+	<p>Loading students...</p>
+}
+else if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+else
+{
+	<ul>
+		@foreach (var student in _students)
+		{
+			<li>
+				<a href="@($"/students/{student.StudentId}")">@student.StudentId - @student.FirstName @student.LastName</a>
+				<span> (@student.Email)</span>
+			</li>
+		}
+	</ul>
+}
+
+@code {
+	private IReadOnlyList<DayCareManagement.WebApp.Services.StudentResponse> _students = Array.Empty<DayCareManagement.WebApp.Services.StudentResponse>();
+	private bool _isLoading = true;
+	private string? _errorMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		try
+		{
+			_students = await ApiClient.GetStudentsAsync();
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+			return;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Failed to load students.";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+}

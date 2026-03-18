@@ -13,5 +13,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\DayCareManagement.Application\DayCareManagement.Application.csproj" />
     <ProjectReference Include="..\..\src\DayCareManagement.Infrastructure\DayCareManagement.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\DayCareManagement.WebApi\DayCareManagement.WebApi.csproj" />
   </ItemGroup>
 </Project>

@@ -35,7 +35,7 @@ namespace DayCareManagement.Infrastructure.Persistence.Migrations
                                 SET "Password" = encode(digest("Password", 'sha256'), 'hex')
                                 WHERE "Password" IS NOT NULL
                                     AND "Password" <> ''
-                                    AND "Password" !~ '^[0-9a-f]{64}$'
+                                    AND "Password" !~ '^[0-9A-Fa-f]{64}$'
                                     AND left("Password", 1) <> '$';
                                 """);
 
@@ -44,7 +44,7 @@ namespace DayCareManagement.Infrastructure.Persistence.Migrations
                                 SET "Password" = encode(digest("Password", 'sha256'), 'hex')
                                 WHERE "Password" IS NOT NULL
                                     AND "Password" <> ''
-                                    AND "Password" !~ '^[0-9a-f]{64}$'
+                                    AND "Password" !~ '^[0-9A-Fa-f]{64}$'
                                     AND left("Password", 1) <> '$';
                                 """);
         }
