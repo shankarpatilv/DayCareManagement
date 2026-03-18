@@ -29,11 +29,5 @@ public sealed class ImmunizationConfiguration : IEntityTypeConfiguration<Immuniz
             .HasForeignKey(immunization => immunization.StudentId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasIndex(immunization => new
-        {
-            immunization.StudentId,
-            immunization.ImmunizationId,
-            immunization.ImmunizationDate
-        }).IsUnique();
     }
 }

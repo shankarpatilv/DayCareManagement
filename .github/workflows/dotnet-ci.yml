@@ -19,11 +19,25 @@ jobs:
               with:
                   dotnet-version: "8.0.x"
 
+            - name: Setup dotnet-ef
+              run: |
+                  dotnet tool install --global dotnet-ef --version 8.*
+                  echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
             - name: Restore
               run: dotnet restore DayCareManagement.sln
 
             - name: Build
               run: dotnet build DayCareManagement.sln --configuration Release --no-restore
+
+            - name: Migration consistency check
+              env:
+                  DAYCAREMANAGEMENT_CONNECTIONSTRING: Host=localhost;Port=5432;Database=ci_dummy;Username=ci_dummy;Password=ci_dummy
+              run: >
+                  dotnet ef migrations has-pending-model-changes
+                  --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj
+                  --context DayCareManagementDbContext
+                  --no-build
 
             - name: Test
               run: dotnet test DayCareManagement.sln --configuration Release --no-build --verbosity normal

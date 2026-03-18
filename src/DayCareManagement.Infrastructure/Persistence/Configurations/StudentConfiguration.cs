@@ -24,6 +24,5 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(student => student.GPA).HasPrecision(3, 2).IsRequired();
         builder.Property(student => student.RegisterDate).IsRequired();
 
-        builder.HasIndex(student => student.Email).IsUnique();
     }
 }
