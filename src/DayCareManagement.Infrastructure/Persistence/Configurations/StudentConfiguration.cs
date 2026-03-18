@@ -20,7 +20,7 @@ public sealed class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(student => student.Address).HasMaxLength(300).IsRequired();
         builder.Property(student => student.PhoneNo).HasMaxLength(15).IsRequired();
         builder.Property(student => student.Email).HasMaxLength(320).IsRequired();
-        builder.Property(student => student.Password).IsRequired();
+        builder.Property(student => student.Password).HasMaxLength(255).IsRequired();
         builder.Property(student => student.GPA).HasPrecision(3, 2).IsRequired();
         builder.Property(student => student.RegisterDate).IsRequired();
 
