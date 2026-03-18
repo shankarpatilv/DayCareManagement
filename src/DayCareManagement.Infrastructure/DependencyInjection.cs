@@ -1,5 +1,7 @@
 using DayCareManagement.Infrastructure.Configuration;
 using DayCareManagement.Infrastructure.Persistence;
+using DayCareManagement.Infrastructure.System;
+using DayCareManagement.Application.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +16,8 @@ public static class DependencyInjection
             configuration.GetConnectionString("DefaultConnection"));
 
         services.AddDbContext<DayCareManagementDbContext>(options => options.UseNpgsql(connectionString));
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        services.AddSingleton<IAuthService, JwtAuthService>();
 
         return services;
     }
