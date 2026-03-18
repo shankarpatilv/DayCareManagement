@@ -1,0 +1,13 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+
+<h1>Day Care Management</h1>
+<p>Redirecting...</p>
+
+@code {
+	protected override void OnInitialized()
+	{
+		Navigation.NavigateTo(AuthSession.IsAuthenticated ? "/students" : "/login");
+	}
+}

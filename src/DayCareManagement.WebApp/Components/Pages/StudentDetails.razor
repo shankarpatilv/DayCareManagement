@@ -1,0 +1,90 @@
+@page "/students/{StudentId:int}"
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>Student Details</h1>
+
+@if (_isLoading)
+{
+	<p>Loading student details...</p>
+}
+else if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+else if (_student is null)
+{
+	<p>Student not found.</p>
+}
+else
+{
+	<p><strong>Id:</strong> @_student.StudentId</p>
+	<p><strong>Name:</strong> @_student.FirstName @_student.LastName</p>
+	<p><strong>Email:</strong> @_student.Email</p>
+	<p><strong>Age (months):</strong> @_student.AgeMonths</p>
+	<p><strong>Register date:</strong> @_student.RegisterDate</p>
+
+	<h2>Immunizations</h2>
+	@if (_immunizations.Count == 0)
+	{
+		<p>No immunizations found.</p>
+	}
+	else
+	{
+		<ul>
+			@foreach (var immunization in _immunizations)
+			{
+				<li>
+					@immunization.ImmunizationName - @immunization.ImmunizationDate - @immunization.Duration - @(immunization.Status ? "Complete" : "Pending")
+				</li>
+			}
+		</ul>
+	}
+
+	<p><a href="/students">Back to students</a></p>
+}
+
+@code {
+	[Parameter]
+	public int StudentId { get; set; }
+
+	private DayCareManagement.WebApp.Services.StudentResponse? _student;
+	private IReadOnlyList<DayCareManagement.WebApp.Services.ImmunizationResponse> _immunizations = Array.Empty<DayCareManagement.WebApp.Services.ImmunizationResponse>();
+	private bool _isLoading = true;
+	private string? _errorMessage;
+
+	protected override async Task OnInitializedAsync()
+	{
+		if (!AuthSession.IsAuthenticated)
+		{
+			Navigation.NavigateTo("/login");
+			return;
+		}
+
+		try
+		{
+			_student = await ApiClient.GetStudentByIdAsync(StudentId);
+			if (_student is null)
+			{
+				return;
+			}
+
+			_immunizations = await ApiClient.GetStudentImmunizationsAsync(StudentId);
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AuthSession.Clear();
+			Navigation.NavigateTo("/login");
+			return;
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Failed to load student details.";
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+}

@@ -1,0 +1,72 @@
+@page "/login"
+@using System.ComponentModel.DataAnnotations
+@inject DayCareManagement.WebApp.Services.DayCareApiClient ApiClient
+@inject DayCareManagement.WebApp.Services.AuthSession AuthSession
+@inject NavigationManager Navigation
+
+<h1>Login</h1>
+
+<EditForm Model="_form" OnValidSubmit="HandleLoginAsync">
+	<DataAnnotationsValidator />
+	<ValidationSummary />
+
+	<div>
+		<label for="email">Email</label>
+		<InputText id="email" @bind-Value="_form.Email" />
+	</div>
+
+	<div>
+		<label for="password">Password</label>
+		<InputText id="password" type="password" @bind-Value="_form.Password" />
+	</div>
+
+	<button type="submit" disabled="@_isSubmitting">Login</button>
+</EditForm>
+
+@if (_errorMessage is not null)
+{
+	<p>@_errorMessage</p>
+}
+
+@code {
+	private readonly LoginFormModel _form = new();
+	private bool _isSubmitting;
+	private string? _errorMessage;
+
+	private async Task HandleLoginAsync()
+	{
+		_errorMessage = null;
+		_isSubmitting = true;
+
+		try
+		{
+			var response = await ApiClient.LoginAsync(new DayCareManagement.WebApp.Services.LoginRequest(_form.Email, _form.Password));
+			if (response is null)
+			{
+				_errorMessage = "Invalid email or password.";
+				return;
+			}
+
+			AuthSession.Set(response.Token, response.Role, response.SubjectId);
+			Navigation.NavigateTo("/students");
+		}
+		catch (Exception)
+		{
+			_errorMessage = "Login failed. Verify API availability and try again.";
+		}
+		finally
+		{
+			_isSubmitting = false;
+		}
+	}
+
+	private sealed class LoginFormModel
+	{
+		[Required]
+		[EmailAddress]
+		public string Email { get; set; } = string.Empty;
+
+		[Required]
+		public string Password { get; set; } = string.Empty;
+	}
+}

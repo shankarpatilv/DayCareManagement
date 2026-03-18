@@ -1,27 +1,56 @@
 # DayCareManagement
 
-Migration workspace for the Java Day Care Management System into a clean .NET 8 web architecture (foundation through auth baseline completed).
+Migration workspace for the Java Day Care Management System into a clean .NET 8 web architecture.
 
 ## Architecture
 
-- `src/DayCareManagement.Domain` — Core domain model and shared base types.
-- `src/DayCareManagement.Application` — Application contracts and use-case orchestration abstractions.
-- `src/DayCareManagement.Infrastructure` — External/system implementations for application abstractions.
-- `src/DayCareManagement.WebApi` — ASP.NET Core API host.
-- `src/DayCareManagement.WebApp` — Blazor web application host.
-- `tests/DayCareManagement.Application.Tests` — Unit tests for application-layer behavior.
+- `src/DayCareManagement.Domain` — Core entities and shared domain primitives.
+- `src/DayCareManagement.Application` — Application contracts and business-facing abstractions.
+- `src/DayCareManagement.Infrastructure` — EF Core persistence, configuration, and system services.
+- `src/DayCareManagement.WebApi` — ASP.NET Core minimal API host.
+- `src/DayCareManagement.WebApp` — Blazor host (UI parity work in progress).
+- `tests/DayCareManagement.Application.Tests` — Unit tests for application and API helper logic.
 
-## Current Status
+## Current Delivery Status
 
-- M1 foundation: project layout, baseline conventions, and host bootstrapping.
-- M2 persistence foundation: domain entities, EF Core mappings, PostgreSQL context wiring, and initial migration.
-- M2 data hardening: case-insensitive unique email indexes and index cleanup applied.
-- M3 quality gate: CI enforces build + test + EF model/migration consistency check.
-- M3 auth baseline implemented in Web API: `/auth/login`, `/auth/me`, and role-policy protected endpoints.
-- P7 first feature slice implemented in Web API: students + immunizations + renewals + state-rules endpoints with authenticated/teacher policy boundaries.
-- JWT startup hardening is enabled: API startup fails fast if `Jwt:SigningKey` is missing, too short, or placeholder/default.
-- Layered solution structure and references compile with current solution setup.
-- Application test project covers auth service behavior, JWT signing-key policy validation, renewal due logic, and API validation helpers.
+- `P0` to `P6` are complete (foundation, persistence, security hardening, integrity hardening, CI quality gate, auth/roles).
+- `P7` is **In Progress**: first feature slice is implemented.
+  - Students endpoints
+  - Immunizations endpoints
+  - Renewals endpoints
+  - State-rules read endpoint
+- `P8` is **In Progress**: first WebApp slice is implemented (login + students read flow).
+- `P9` (release/hypercare) is pending.
+
+See tracker: `docs/PROJECT-TASKS.md`.
+
+## Current API Surface (implemented)
+
+- Auth
+  - `POST /auth/login`
+  - `GET /auth/me`
+  - `GET /auth/teacher-only`
+- Students and immunizations
+  - `GET /students`
+  - `GET /students/{studentId}`
+  - `POST /students` (Teacher)
+  - `PUT /students/{studentId}` (Teacher)
+  - `GET /students/{studentId}/immunizations`
+  - `POST /students/{studentId}/immunizations` (Teacher)
+  - `PUT /students/{studentId}/immunizations/{immunizationId}/{immunizationDate}` (Teacher)
+  - `DELETE /students/{studentId}/immunizations/{immunizationId}/{immunizationDate}` (Teacher)
+- Renewals and rules
+  - `GET /renewals/due`
+  - `POST /renewals/{studentId}` (Teacher)
+  - `GET /state-rules`
+
+## Current WebApp Slice (implemented)
+
+- `GET /login` page with API-backed authentication (`POST /auth/login`).
+- Protected students list page (`/students`) using authenticated API calls.
+- Protected student details page (`/students/{studentId}`) with immunization list.
+- JWT token attached to API calls via delegated HTTP handler.
+- Session is scoped/in-memory for now (no persistent browser storage yet).
 
 ## Quickstart
 
@@ -31,13 +60,13 @@ Migration workspace for the Java Day Care Management System into a clean .NET 8 
 - PostgreSQL
 - EF Core CLI (`dotnet-ef`)
 
-Install EF CLI globally (recommended):
+Install EF CLI globally:
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-### Configure local connection string
+### Configure connection string
 
 From `DayCareManagement/`:
 
@@ -47,17 +76,15 @@ DAYCAREMANAGEMENT_CONNECTIONSTRING=Host=localhost;Port=5432;Database=daycaremana
 EOF
 ```
 
-Set `DAYCAREMANAGEMENT_CONNECTIONSTRING` in `.env`.
-
 ### Configure JWT settings (required)
 
-Set JWT settings via environment variables, user-secrets, or `appsettings`.
+Set values using environment variables, user-secrets, or secure configuration.
 
-Environment variable names:
+Required keys:
 
 - `Jwt__Issuer`
 - `Jwt__Audience`
-- `Jwt__SigningKey` (must be 32+ characters and not a placeholder/tutorial value)
+- `Jwt__SigningKey` (must be 32+ chars and not placeholder/default)
 - `Jwt__ExpiresMinutes`
 
 Example:
@@ -69,7 +96,7 @@ export Jwt__SigningKey='use-a-unique-random-secret-at-least-32-characters'
 export Jwt__ExpiresMinutes=60
 ```
 
-### Restore, build, and test
+### Build and test
 
 ```bash
 dotnet restore DayCareManagement.sln
@@ -77,9 +104,15 @@ dotnet build DayCareManagement.sln
 dotnet test DayCareManagement.sln
 ```
 
-### Verify EF model/migration consistency (same check as CI)
+If tests fail with `Microsoft.AspNetCore.App 8.0.0` missing, install .NET 8 ASP.NET Core runtime/SDK and rerun.
+
+### EF model/migration consistency check (CI-equivalent)
+
+Run a Release build first, then run the EF check:
 
 ```bash
+dotnet build DayCareManagement.sln --configuration Release --no-restore
+
 DAYCAREMANAGEMENT_CONNECTIONSTRING='Host=localhost;Port=5432;Database=ci_dummy;Username=ci_dummy;Password=ci_dummy' \
 dotnet ef migrations has-pending-model-changes \
   --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj \
@@ -88,7 +121,7 @@ dotnet ef migrations has-pending-model-changes \
   --no-build
 ```
 
-### Apply database migration
+### Apply migrations
 
 ```bash
 dotnet ef database update \
@@ -97,14 +130,39 @@ dotnet ef database update \
   --context DayCareManagementDbContext
 ```
 
-## Collaboration Workflow
+### Run API host
 
-- GitHub setup and repository bootstrap: [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md)
-- Branching, release, and hotfix process: [docs/GIT-FLOW.md](docs/GIT-FLOW.md)
+```bash
+dotnet run --project src/DayCareManagement.WebApi/DayCareManagement.WebApi.csproj
+```
 
-## Next Steps (M3+)
+### Run WebApp host
 
-- Continue P7 module migration beyond the first API slice to reach full legacy parity.
-- Add importer pipeline with CSV validation and mapping rules.
-- Expand Web App integration against existing API endpoints.
-- Expand automated tests for business rules and integration paths.
+Set WebApp API base URL in `src/DayCareManagement.WebApp/appsettings.json`:
+
+```json
+{
+	"Api": {
+		"BaseUrl": "http://localhost:5125"
+	}
+}
+```
+
+Run WebApp:
+
+```bash
+dotnet run --project src/DayCareManagement.WebApp/DayCareManagement.WebApp.csproj
+```
+
+## Collaboration Docs
+
+- GitHub bootstrap: [docs/GITHUB-SETUP.md](docs/GITHUB-SETUP.md)
+- Git flow: [docs/GIT-FLOW.md](docs/GIT-FLOW.md)
+- Data dictionary: [docs/DATA-DICTIONARY.md](docs/DATA-DICTIONARY.md)
+- Entity model notes: [docs/M2-ENTITY-MODEL.md](docs/M2-ENTITY-MODEL.md)
+
+## Next Work
+
+- Continue `P7` module migration to full legacy parity.
+- Complete `P8` Blazor UI integration and parity views.
+- Execute `P9` release readiness and hypercare checklist.
