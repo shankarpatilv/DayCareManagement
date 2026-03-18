@@ -18,9 +18,10 @@ Migration workspace for the Java Day Care Management System into a clean .NET 8 
 - M2 data hardening: case-insensitive unique email indexes and index cleanup applied.
 - M3 quality gate: CI enforces build + test + EF model/migration consistency check.
 - M3 auth baseline implemented in Web API: `/auth/login`, `/auth/me`, and role-policy protected endpoints.
+- P7 first feature slice implemented in Web API: students + immunizations + renewals + state-rules endpoints with authenticated/teacher policy boundaries.
 - JWT startup hardening is enabled: API startup fails fast if `Jwt:SigningKey` is missing, too short, or placeholder/default.
 - Layered solution structure and references compile with current solution setup.
-- Application test project covers auth service behavior and JWT signing-key policy validation.
+- Application test project covers auth service behavior, JWT signing-key policy validation, renewal due logic, and API validation helpers.
 
 ## Quickstart
 
@@ -103,7 +104,7 @@ dotnet ef database update \
 
 ## Next Steps (M3+)
 
-- Continue migrating legacy feature modules beyond current auth and persistence scope.
+- Continue P7 module migration beyond the first API slice to reach full legacy parity.
 - Add importer pipeline with CSV validation and mapping rules.
 - Expand Web App integration against existing API endpoints.
 - Expand automated tests for business rules and integration paths.
