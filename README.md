@@ -1,6 +1,6 @@
 # DayCareManagement
 
-Milestones M1 + M2 persistence foundation for migrating the Java Day Care Management System into a clean .NET 8 web architecture.
+Migration workspace for the Java Day Care Management System into a clean .NET 8 web architecture (foundation through auth baseline completed).
 
 ## Architecture
 
@@ -15,6 +15,8 @@ Milestones M1 + M2 persistence foundation for migrating the Java Day Care Manage
 
 - M1 foundation: project layout, baseline conventions, and host bootstrapping.
 - M2 persistence foundation: domain entities, EF Core mappings, PostgreSQL context wiring, and initial migration.
+- M2 data hardening: case-insensitive unique email indexes and index cleanup applied.
+- M3 quality gate: CI enforces build + test + EF model/migration consistency check.
 - M3 auth baseline implemented in Web API: `/auth/login`, `/auth/me`, and role-policy protected endpoints.
 - JWT startup hardening is enabled: API startup fails fast if `Jwt:SigningKey` is missing, too short, or placeholder/default.
 - Layered solution structure and references compile with current solution setup.
@@ -40,7 +42,7 @@ From `DayCareManagement/`:
 
 ```bash
 cat > .env <<'EOF'
-DAYCAREMANAGEMENT_CONNECTIONSTRING=Host=localhost;Port=5432;Database=daycare;Username=postgres;Password=postgres
+DAYCAREMANAGEMENT_CONNECTIONSTRING=Host=localhost;Port=5432;Database=daycaremanagement;Username=postgres;Password=postgres
 EOF
 ```
 
@@ -72,6 +74,17 @@ export Jwt__ExpiresMinutes=60
 dotnet restore DayCareManagement.sln
 dotnet build DayCareManagement.sln
 dotnet test DayCareManagement.sln
+```
+
+### Verify EF model/migration consistency (same check as CI)
+
+```bash
+DAYCAREMANAGEMENT_CONNECTIONSTRING='Host=localhost;Port=5432;Database=ci_dummy;Username=ci_dummy;Password=ci_dummy' \
+dotnet ef migrations has-pending-model-changes \
+  --project src/DayCareManagement.Infrastructure/DayCareManagement.Infrastructure.csproj \
+  --context DayCareManagementDbContext \
+  --configuration Release \
+  --no-build
 ```
 
 ### Apply database migration
